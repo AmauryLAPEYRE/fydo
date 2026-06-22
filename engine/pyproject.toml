@@ -18,8 +18,8 @@ dev = [
     "pytest>=8.0",
     "scikit-learn>=1.5",   # roc_auc / LogisticRegression du test bouclier
 ]
-# Persistance Supabase (étape couche données).
-store = ["supabase>=2.0"]
+# Persistance : connexion directe Postgres (pooler Supabase) côté job backend.
+store = ["psycopg[binary]>=3.2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
