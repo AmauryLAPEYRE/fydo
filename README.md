@@ -71,8 +71,11 @@ Divergences intentionnelles actées (la SPEC gagne, hors parité) :
 
 - [x] Step 0 — squelette, `config.py`, repo, oracle gelé
 - [x] Step 1 — golden master figé + `quality.py` (parité oracle au point près)
-- [~] Step 2 — `price.py` (RSI/MA200 parité, drawdown 756 en propriété) puis `construct.py` (gated-EW de base)
-- [ ] Step 3 — `value.py` §4.3 + `distress.py` §4.4 (code neuf + MC bouclier en régression)
+- [x] Step 2 — `price.py` (RSI/MA200 parité, drawdown 756 propriété) + `construct.py` (gated-EW de base, caps)
+- [x] Step 3 — `value.py` §4.3 + `distress.py` §4.4 + pipeline `build_portfolio` + invariants + MC en régression
+- [ ] Step 3e — `signals.py` §4.5/§5 (ACCUMULER/TENIR/ALLÉGER/FILTRER + perso prix d'achat) → clôt le cerveau
 - [ ] Step 4 — feeder FMP (même DataFrame d'entrée → parité inchangée) + table `positions`
 - [ ] Step 5 — cron quotidien → `signals` → alertes
 - [ ] Step 6 — UI (démarcation §0 visible)
+
+Suite de tests : `pytest` (rapide, 43) · `pytest -m slow` (régression MC, 4) · scripts d'évidence dans `tests/validation/`.

@@ -23,7 +23,10 @@ store = ["supabase>=2.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# Les scripts tests/validation/ sont de l'évidence MC à la demande (exécution au
-# niveau module, lente). Hors suite unitaire rapide ; lancés à la main, ou durcis
-# en régression dédiée (sign + ancre, jamais magnitude) plus tard.
-addopts = "--ignore=tests/validation"
+# tests/validation/ = scripts d'évidence à la demande (MC au niveau module).
+# La régression MC durcie vit dans test_shield_regression.py, marquée `slow` et
+# exclue de la suite rapide par défaut. La lancer : pytest -m slow
+addopts = "--ignore=tests/validation -m 'not slow'"
+markers = [
+    "slow: régression Monte-Carlo lente (hors suite rapide ; lancer avec -m slow)",
+]
