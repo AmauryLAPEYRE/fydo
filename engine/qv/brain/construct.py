@@ -12,7 +12,26 @@ et distress.py existent. Ici : les primitives réutilisables.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Mapping
+
 import pandas as pd
+
+from qv.brain.distress import level_pass
+
+# Statuts explicites par nom (auditabilité §8) — pas de poids 0 muet.
+STATUS_SELECTED = "selected"
+STATUS_BELOW_GATE = "below_gate"
+STATUS_DISTRESS = "distress_excluded"
+STATUS_OUT = "out_of_perimeter"
+
+
+@dataclass(frozen=True)
+class Portfolio:
+    """positions : index=nom, colonnes [combined_z, status, weight]. cash : fraction.
+    Invariant : positions['weight'].sum() + cash == 1.0."""
+    positions: pd.DataFrame
+    cash: float
 
 
 def combined_score(
@@ -64,3 +83,45 @@ def apply_caps(
             w[in_sector] *= sector_cap / sector_sums[s]
         w = w / w.sum()
     return w
+
+
+def build_portfolio(
+    df: pd.DataFrame,
+    sectors: pd.Series,
+    *,
+    weight_quality: float,
+    weight_value: float,
+    gate_threshold: float,
+    level_thresholds: Mapping[str, float],
+    position_cap: float,
+    sector_cap: float,
+    cash_buffer: float,
+) -> Portfolio:
+    """Assemble le livre (SPEC §4.6) : combined_z → drop NIVEAU détresse → gate →
+    equal_weight (ZÉRO tilt) → caps → coussin de cash fixe. Statut explicite par nom.
+
+    Seul l'écran de NIVEAU est gating dur (la tendance n'entre jamais ici). Sélection
+    vide → 100 % cash (fail-neutral, pas de division par zéro)."""
+    sectors = sectors.reindex(df.index)
+    combined = combined_score(df, weight_quality, weight_value)
+    passes_level = level_pass(df, **level_thresholds)
+
+    # Statut, par précédence croissante (la dernière affectation gagne) :
+    # selected < below_gate < distress_excluded < out_of_perimeter.
+    status = pd.Series(STATUS_SELECTED, index=df.index)
+    status[combined < gate_threshold] = STATUS_BELOW_GATE     # NaN < seuil → False
+    status[~passes_level] = STATUS_DISTRESS                   # niveau seul
+    status[combined.isna()] = STATUS_OUT                      # ni quality ni value
+
+    selected = status == STATUS_SELECTED
+    positions = pd.DataFrame(index=df.index)
+    positions["combined_z"] = combined
+    positions["status"] = status
+
+    if not selected.any():
+        positions["weight"] = 0.0
+        return Portfolio(positions=positions, cash=1.0)
+
+    capped = apply_caps(equal_weight(selected), sectors, position_cap, sector_cap)
+    positions["weight"] = capped * (1.0 - cash_buffer)
+    return Portfolio(positions=positions, cash=cash_buffer)
