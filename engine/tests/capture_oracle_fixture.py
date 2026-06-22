@@ -41,11 +41,34 @@ else:
 # Le drawdown N'EST PAS capturé : l'oracle est en 252 j, la prod en 756 j
 # (divergence intentionnelle SPEC §4.3) → drawdown_756 testé en propriété, pas parité.
 ppath = FIX / "oracle_golden_price.pkl"
-price_golden = {
-    "px": oracle.px[oracle.basket].copy(),   # Close quotidien (index daté)
-    "rsi_now": dict(oracle.rsi_now),          # RSI(14) dernier point, par nom
-    "ma200": oracle.ma200.copy(),             # MA200 mensuelle (rolling 200 → ME.last)
-}
-pd.to_pickle(price_golden, ppath)
-print(f"[CAPTURE] prix : {len(oracle.basket)} noms, "
-      f"{len(price_golden['px'])} jours -> {ppath.name}")
+if ppath.exists():
+    print(f"[SKIP] golden prix déjà figé : {ppath.name} (préservé)")
+else:
+    price_golden = {
+        "px": oracle.px[oracle.basket].copy(),   # Close quotidien (index daté)
+        "rsi_now": dict(oracle.rsi_now),          # RSI(14) dernier point, par nom
+        "ma200": oracle.ma200.copy(),             # MA200 mensuelle (rolling 200 → ME.last)
+    }
+    pd.to_pickle(price_golden, ppath)
+    print(f"[CAPTURE] prix : {len(oracle.basket)} noms, "
+          f"{len(price_golden['px'])} jours -> {ppath.name}")
+
+# ── Golden CONSTRUCTION ── sorties RÉELLES de l'oracle (pas recalculées → pas de
+# circularité dans la parité) : gate (qpct≥0.4), base (gated equal-weight), sectors,
+# et les poids capés. w_cg.iloc[-1] sert UNIQUEMENT de vecteur d'entrée au test des
+# plafonds (l'algo de caps est indépendant de comment les poids ont été formés ; on
+# ne porte PAS le tilt qui les a produits — il est mort).
+cpath = FIX / "oracle_golden_construct.pkl"
+if cpath.exists():
+    print(f"[SKIP] golden construction déjà figé : {cpath.name} (préservé)")
+else:
+    construct_golden = {
+        "gate": oracle.gate.copy(),                  # bool, indexé basket
+        "base": oracle.base.copy(),                  # gated equal-weight
+        "sectors": oracle.sectors.copy(),            # secteur par nom du basket
+        "w_cg_last": oracle.w_cg.iloc[-1].copy(),    # vecteur d'entrée des caps (tilté)
+        "w_capped_last": oracle.w_capped.iloc[-1].copy(),  # caps(w_cg_last)
+    }
+    pd.to_pickle(construct_golden, cpath)
+    print(f"[CAPTURE] construction : gate {int(oracle.gate.sum())}/{len(oracle.gate)} "
+          f"noms gated -> {cpath.name}")
