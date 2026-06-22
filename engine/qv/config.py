@@ -23,8 +23,12 @@ from __future__ import annotations
 # backtest (point-in-time, morts inclus → Bloc E). Ne jamais mélanger les deux.
 # ─────────────────────────────────────────────────────────────────────────────
 UNIVERSE_TARGET_SIZE_MIN = 80          # cible basse (≥6-8 noms/secteur)
-UNIVERSE_TARGET_SIZE_MAX = 120         # cible haute
-UNIVERSE_MIN_MARKET_CAP_EUR = 5_000_000_000  # prior : plancher large-cap (5 Md€)
+UNIVERSE_TARGET_SIZE_MAX = 120         # cible haute (top-N par market cap)
+# Règle US-only V1, performance-agnostic (filtre de TAILLE, pas de rendement) :
+UNIVERSE_COUNTRY = "US"
+UNIVERSE_MIN_MARKET_CAP_USD = 10_000_000_000   # plancher large-cap (10 Md$)
+UNIVERSE_EXCHANGES = ("NASDAQ", "NYSE")          # exclut OTC/ADR pink
+UNIVERSE_SCREEN_RULE = "US large-cap: country=US, mcap>10e9, NASDAQ/NYSE, top-120 par mcap"
 
 # FIN_STRUCTURE : banques + assureurs, exclus du scoring qualité ROIC/marge
 # (capital/marges non comparables). Classés par INDUSTRIE FMP (règle, pas liste
@@ -138,3 +142,24 @@ FUNDAMENTALS_REFRESH_DAYS = 90         # cache trimestriel (les comptes ne bouge
 # utilise le dernier filing dispo (= info du moment, zéro look-ahead).
 BACKTEST_FUNDAMENTAL_LAG_MONTHS = 3    # 6 = prudent
 REBALANCE_FREQUENCY_DAYS = 90          # trimestriel + bandes de no-trade larges (coûts)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Assembleurs (bundles de constantes ci-dessus — source unique, zéro duplication)
+# ─────────────────────────────────────────────────────────────────────────────
+def derive_conv() -> dict:
+    """Paramètres de dérivation FMP → contrat (metrics.derive_fundamentals)."""
+    return dict(
+        fin_structure_keywords=FIN_STRUCTURE_INDUSTRY_KEYWORDS,
+        tax_default=TAX_RATE_DEFAULT, tax_min=TAX_RATE_MIN, tax_max=TAX_RATE_MAX,
+        interest_coverage_cap=INTEREST_COVERAGE_CAP,
+    )
+
+
+def level_thresholds() -> dict:
+    """Seuils de l'écran de niveau du bouclier (distress.level_pass)."""
+    return dict(
+        interest_cov_min=SHIELD_INTEREST_COVERAGE_MIN,
+        net_debt_ebitda_max=SHIELD_NET_DEBT_EBITDA_MAX,
+        fcf_ni_min=SHIELD_FCF_TO_NI_MIN, fcf_ni_max=SHIELD_FCF_TO_NI_MAX,
+    )

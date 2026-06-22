@@ -39,14 +39,57 @@ def _clean(v):
     return v
 
 
-def upsert_universe(conn, rows: list[dict]) -> None:
-    sql = """insert into universe (ticker,name,sector,currency,is_fin_structure,active)
-             values (%(ticker)s,%(name)s,%(sector)s,%(currency)s,%(is_fin_structure)s,%(active)s)
+def upsert_universe(conn, rows: list[dict], screen_rule: str, screened_at) -> None:
+    sql = """insert into universe
+               (ticker,name,sector,currency,is_fin_structure,active,screen_rule,screened_at)
+             values (%(ticker)s,%(name)s,%(sector)s,%(currency)s,%(is_fin_structure)s,
+                     true,%(screen_rule)s,%(screened_at)s)
              on conflict (ticker) do update set
                name=excluded.name, sector=excluded.sector, currency=excluded.currency,
-               is_fin_structure=excluded.is_fin_structure, active=excluded.active"""
+               is_fin_structure=excluded.is_fin_structure, active=true,
+               screen_rule=excluded.screen_rule, screened_at=excluded.screened_at"""
+    payload = [{**{k: _clean(v) for k, v in r.items()},
+                "screen_rule": screen_rule, "screened_at": screened_at} for r in rows]
     with conn.cursor() as cur:
-        cur.executemany(sql, [{k: _clean(v) for k, v in r.items()} for r in rows])
+        cur.executemany(sql, payload)
+
+
+FUND_COLS = ["sector", "nonscore", "currency", "mktcap", "roic_5y_avg",
+             "gross_margin_5y_avg", "net_margin_5y_avg", "rev_cagr_5y", "debt_to_equity",
+             "interest_coverage", "net_debt_ebitda", "fcf_ni", "margin_trend", "roic_trend",
+             "fcf_5y", "ebit_5y", "ni_5y", "total_debt", "cash", "years_available"]
+
+
+def upsert_fundamentals(conn, ticker: str, contract: dict) -> None:
+    cols = ",".join(FUND_COLS)
+    placeholders = ",".join(f"%({c})s" for c in FUND_COLS)
+    updates = ",".join(f"{c}=excluded.{c}" for c in FUND_COLS)
+    sql = (f"insert into fundamentals_cache (ticker,{cols},fetched_at) "
+           f"values (%(ticker)s,{placeholders},now()) "
+           f"on conflict (ticker) do update set {updates}, fetched_at=now()")
+    row = {"ticker": ticker, **{c: _clean(contract.get(c)) for c in FUND_COLS}}
+    conn.execute(sql, row)
+
+
+def get_cached_fundamentals(conn, max_age_days: int) -> pd.DataFrame:
+    """Lignes du cache encore fraîches (≤ max_age_days), indexées par ticker."""
+    cols = ",".join(["ticker"] + FUND_COLS)
+    rows = conn.execute(
+        f"select {cols} from fundamentals_cache "
+        f"where fetched_at > now() - make_interval(days => %s)", (max_age_days,)
+    ).fetchall()
+    df = pd.DataFrame(rows, columns=["ticker"] + FUND_COLS)
+    return df.set_index("ticker") if not df.empty else df
+
+
+def get_previous_signals(conn, before_date) -> pd.DataFrame:
+    """Signaux du run le plus récent strictement avant `before_date` (pour le delta)."""
+    rows = conn.execute(
+        "select ticker,signal,trigger from signals where as_of = "
+        "(select max(as_of) from signals where as_of < %s)", (before_date,)
+    ).fetchall()
+    df = pd.DataFrame(rows, columns=["ticker", "signal", "trigger"])
+    return df.set_index("ticker") if not df.empty else df
 
 
 SCORE_COLS = ["quality_z", "quality_pct", "value_xs_z", "combined_z", "drawdown_756",

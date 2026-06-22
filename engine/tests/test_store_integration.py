@@ -43,7 +43,8 @@ def conn():
 
 def test_universe_roundtrip(conn):
     store.upsert_universe(conn, [{"ticker": TEST_TICKER, "name": "Test", "sector": "Tech",
-                                  "currency": "USD", "is_fin_structure": False, "active": True}])
+                                  "currency": "USD", "is_fin_structure": False}],
+                          screen_rule="test-rule", screened_at=TEST_DATE)
     row = conn.execute("select sector,is_fin_structure from universe where ticker=%s",
                        (TEST_TICKER,)).fetchone()
     assert row == ("Tech", False)
