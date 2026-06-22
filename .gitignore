@@ -1,0 +1,34 @@
+# Secrets — jamais commités (clé FMP, clés Supabase)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Data caches / fixtures volumineuses (régénérables)
+engine/tests/fixtures/*.parquet
+*.local.parquet
+
+# Node / Next.js
+node_modules/
+web/.next/
+web/out/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Remember (buffer de session, non versionné)
+.remember/

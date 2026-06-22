@@ -1,0 +1,25 @@
+[project]
+name = "qv-engine"
+version = "0.1.0"
+description = "Moteur Qualité-Value-Contrarien (QARP) — cerveau déterministe, aide-décision"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "requests>=2.31",      # client FMP
+]
+
+[project.optional-dependencies]
+# yfinance : utilisé UNIQUEMENT par l'oracle gelé qv_engine_v4.py (réf. de test).
+# La prod ne dépend pas de yfinance — la donnée live vient de FMP.
+oracle = ["yfinance>=1.3"]
+# Outils de test, dont le MC structurel du bouclier (test_shield_structural.py).
+dev = [
+    "pytest>=8.0",
+    "scikit-learn>=1.5",   # roc_auc / LogisticRegression du test bouclier
+]
+# Persistance Supabase (étape couche données).
+store = ["supabase>=2.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
