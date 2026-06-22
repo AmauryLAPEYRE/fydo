@@ -23,3 +23,7 @@ store = ["supabase>=2.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Les scripts tests/validation/ sont de l'évidence MC à la demande (exécution au
+# niveau module, lente). Hors suite unitaire rapide ; lancés à la main, ou durcis
+# en régression dédiée (sign + ancre, jamais magnitude) plus tard.
+addopts = "--ignore=tests/validation"
