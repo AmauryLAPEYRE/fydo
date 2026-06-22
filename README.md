@@ -30,7 +30,7 @@ Source de vérité figée : `SPEC_QV_ENGINE_FINAL.md` (à déposer à la racine)
 - **Scheduler** : GitHub Actions cron (V1) → durcissement container managé ensuite.
 - **Backend** : Supabase (Postgres + RLS + Edge Functions = API auth + dispatch alertes uniquement).
 - **Frontend** : Next.js (`web/`).
-- **Données** : FMP — prix quotidiens (1 batch quote/jour) + cache fondamental trimestriel.
+- **Données** : FMP (API « stable »). **Périmètre V1 = US-only** : les fondamentaux EU sont *premium* sur le tier gratuit (income/balance/cash-flow EU → HTTP 402 ; profils/prix EU OK). Europe à rajouter sur un plan international. Pas de batch quote en gratuit → 1 appel `quote`/nom/jour (≤120 noms < 250) + cache fondamental trimestriel.
 
 ## Structure
 
@@ -74,7 +74,7 @@ Divergences intentionnelles actées (la SPEC gagne, hors parité) :
 - [x] Step 2 — `price.py` (RSI/MA200 parité, drawdown 756 propriété) + `construct.py` (gated-EW de base, caps)
 - [x] Step 3 — `value.py` §4.3 + `distress.py` §4.4 + pipeline `build_portfolio` + invariants + MC en régression
 - [x] Step 3e — `signals.py` §4.5/§5 (ACCUMULER/TENIR/ALLÉGER/FILTRER + perso) → **cerveau complet**
-- [ ] Step 4 — feeder FMP (même DataFrame d'entrée → parité inchangée) + table `positions`
+- [~] Step 4 — feeder FMP : `metrics.py` (dérivation FMP→contrat) ✓ · reste `fmp_client.py` (HTTP) + `store.py`/migrations + table `positions`
 - [ ] Step 5 — cron quotidien → `signals` → alertes
 - [ ] Step 6 — UI (démarcation §0 visible)
 

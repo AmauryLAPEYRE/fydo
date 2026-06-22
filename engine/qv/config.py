@@ -118,7 +118,16 @@ PERSO_REINFORCE_DROP = -0.15           # -15% du prix d'achat ET toujours sélec
 
 # ─────────────────────────────────────────────────────────────────────────────
 # §3 — DONNÉES (FMP)
+# API « stable » (les /api/v3 sont fermés aux nouvelles clés).
+# Périmètre V1 = US-only : les fondamentaux EU sont premium sur le tier gratuit
+# (income/balance/cash-flow EU → HTTP 402). Europe à rajouter sur un plan incluant
+# l'international (décision 2026-06, cf. README). Pas de batch quote en gratuit
+# → 1 appel quote/nom/jour (≤120 noms < 250).
+# Convention ROIC (FMP ne fournit PAS l'Invested Capital en line item) :
+#   IC = totalDebt + totalStockholdersEquity + minorityInterest − cashAndCashEquivalents
+#   (capital opérationnel, cash-netté — cohérent avec EV ; trou de spec → on tranche).
 # ─────────────────────────────────────────────────────────────────────────────
+FMP_BASE_URL = "https://financialmodelingprep.com/stable"
 FMP_FREE_TIER_DAILY_CALLS = 250        # plafond du tier gratuit
 FUNDAMENTALS_REFRESH_DAYS = 90         # cache trimestriel (les comptes ne bougent pas/jour)
 # Lag fondamental : règle de BACKTEST uniquement (anti look-ahead). En LIVE, on
