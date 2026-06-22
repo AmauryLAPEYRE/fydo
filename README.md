@@ -74,8 +74,8 @@ Divergences intentionnelles actées (la SPEC gagne, hors parité) :
 - [x] Step 2 — `price.py` (RSI/MA200 parité, drawdown 756 propriété) + `construct.py` (gated-EW de base, caps)
 - [x] Step 3 — `value.py` §4.3 + `distress.py` §4.4 + pipeline `build_portfolio` + invariants + MC en régression
 - [x] Step 3e — `signals.py` §4.5/§5 (ACCUMULER/TENIR/ALLÉGER/FILTRER + perso) → **cerveau complet**
-- [~] Step 4 — feeder FMP : `metrics.py` (dérivation FMP→contrat) ✓ · reste `fmp_client.py` (HTTP) + `store.py`/migrations + table `positions`
-- [ ] Step 5 — cron quotidien → `signals` → alertes
-- [ ] Step 6 — UI (démarcation §0 visible)
+- [x] Step 4 — feeder FMP (`metrics`/`fmp_client`/`feeder`, run live prouvé) + Supabase (schéma + RLS + `store.py`, round-trip live)
+- [ ] Step 5 — `run_daily` (fetch caché → score → écrit `scores`/`signals` → log run) + cron GH Actions + alertes
+- [ ] Step 6 — UI Next.js (saisie `positions` + dashboard signaux, démarcation §0 visible)
 
 Suite de tests : `pytest` (rapide, 43) · `pytest -m slow` (régression MC, 4) · scripts d'évidence dans `tests/validation/`.
