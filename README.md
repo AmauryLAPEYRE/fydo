@@ -55,11 +55,24 @@ docs/archive/           # specs superseded
 3. **Pas de factor-timing**, pas de **tilt de magnitude**, pas de **timing de cash**.
 4. Déterminisme · fail-neutral (donnée manquante → pas de signal) · **log de chaque nom droppé** · zéro magic value · `positions` = single source of truth.
 
+## Gouvernance — conflit oracle vs SPEC
+
+L'oracle `qv_engine_v4.py` et `SPEC_QV_ENGINE_FINAL.md` peuvent diverger. Règle de tie-break :
+
+> **La SPEC a-t-elle *décidé* ce point, ou *comble-t-elle un trou* qu'elle a laissé ?**
+> - **Décision SPEC** (différente du prototype) → **la SPEC gagne** : divergence intentionnelle, **hors parité**, documentée et testée en propriété. Le prototype est superseded sur ce point.
+> - **Trou** (définition sous-spécifiée : invested capital, EV avec/sans minoritaires…) → **convention de l'oracle**, **parité requise** (faute d'autre autorité).
+
+Divergences intentionnelles actées (la SPEC gagne, hors parité) :
+- **Fenêtre de drawdown = 756 j** (SPEC §4.3) vs 252 j dans l'oracle. Un creux 3 ans est un meilleur ancrage de « peur » ; et le tilt étant mort, le drawdown n'est plus que contextuel/audit. Garde : historique < 756 j → drawdown **fail-neutral** (NaN/insuffisant), jamais un drawdown 200 j déguisé en 756.
+- **Couverture d'intérêts (+0.5)** et **shrinkage (λ=0.5)** ajoutés au score qualité (SPEC §4.2), absents de l'oracle.
+
 ## État du build
 
 - [x] Step 0 — squelette, `config.py`, repo, oracle gelé
-- [ ] Step 1 — couche données FMP + table `positions` + fixture-oracle
-- [ ] Step 2 — port qualité/prix/construction (parité vs oracle) + value §4.3 + bouclier §4.4
-- [ ] Step 3 — cron quotidien → `signals`
-- [ ] Step 4 — alertes
-- [ ] Step 5 — UI (démarcation §0 visible)
+- [x] Step 1 — golden master figé + `quality.py` (parité oracle au point près)
+- [~] Step 2 — `price.py` (RSI/MA200 parité, drawdown 756 en propriété) puis `construct.py` (gated-EW de base)
+- [ ] Step 3 — `value.py` §4.3 + `distress.py` §4.4 (code neuf + MC bouclier en régression)
+- [ ] Step 4 — feeder FMP (même DataFrame d'entrée → parité inchangée) + table `positions`
+- [ ] Step 5 — cron quotidien → `signals` → alertes
+- [ ] Step 6 — UI (démarcation §0 visible)
