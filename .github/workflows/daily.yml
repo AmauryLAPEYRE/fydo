@@ -8,7 +8,12 @@ name: run-daily
 on:
   schedule:
     - cron: "0 22 * * 1-5"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Limite univers (nb de noms ; vide = complet). Tier gratuit : ~15-40 max/jour."
+        required: false
+        default: "15"
 
 jobs:
   run-daily:
@@ -25,4 +30,4 @@ jobs:
         env:
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python run_daily.py
+        run: python run_daily.py ${{ github.event.inputs.limit }}

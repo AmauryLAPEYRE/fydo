@@ -152,7 +152,7 @@ def run(database_url: str, fmp_key: str, as_of: datetime.date, universe_limit=No
 
 def main():
     env = _env()
-    limit = int(sys.argv[1]) if len(sys.argv) > 1 else None
+    limit = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].strip() else None
     as_of = datetime.date.today()
     gen, delta, dropped = run(env["DATABASE_URL"], env["FMP_API_KEY"], as_of, universe_limit=limit)
     if dropped:
