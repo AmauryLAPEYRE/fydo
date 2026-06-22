@@ -14,7 +14,7 @@ from qv.data.metrics import derive_fundamentals
 
 FIX = pathlib.Path(__file__).resolve().parent / "fixtures" / "fmp_sample_AAPL.json"
 CONV = dict(fin_structure_keywords=("Bank", "Insurance"),
-            tax_default=0.25, tax_min=0.0, tax_max=0.6)
+            tax_default=0.25, tax_min=0.0, tax_max=0.6, interest_coverage_cap=100.0)
 
 
 @pytest.fixture
@@ -62,8 +62,8 @@ def test_roic_uses_cash_netted_invested_capital(aapl):
 def test_distress_inputs_from_latest(aapl):
     out = derive_fundamentals(aapl, **CONV)
     b0, i0, c0 = aapl["balance"][0], aapl["income"][0], aapl["cashflow"][0]
-    # interestExpense = 0 → couverture infinie (boîte sans coût de dette = sûre)
-    assert out["interest_coverage"] == np.inf
+    # interestExpense = 0 → couverture plafonnée au sentinel (boîte sans coût de dette)
+    assert out["interest_coverage"] == 100.0
     assert out["net_debt_ebitda"] == pytest.approx(b0["netDebt"] / i0["ebitda"])
     assert out["fcf_ni"] == pytest.approx(c0["freeCashFlow"] / i0["netIncome"])
     assert out["debt_to_equity"] == pytest.approx(b0["totalDebt"] / b0["totalStockholdersEquity"])

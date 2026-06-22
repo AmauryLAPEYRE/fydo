@@ -58,7 +58,10 @@ def _is_fin_structure(industry, keywords) -> bool:
     return any(k.lower() in ind for k in keywords)
 
 
-def derive_fundamentals(responses, *, fin_structure_keywords, tax_default, tax_min, tax_max) -> dict:
+def derive_fundamentals(
+    responses, *, fin_structure_keywords, tax_default, tax_min, tax_max,
+    interest_coverage_cap,
+) -> dict:
     """FMP {profile, income, balance, cashflow, quote} → dict du contrat cerveau."""
     profile = responses["profile"][0]
     quote = responses["quote"][0]
@@ -89,8 +92,11 @@ def derive_fundamentals(responses, *, fin_structure_keywords, tax_default, tax_m
 
     b0, i0, c0 = bal[0], inc[0], cf[0]
     interest = i0.get("interestExpense")
-    interest_coverage = np.inf if (interest is None or _f(interest) <= 0) \
-        else _safe_div(i0.get("ebit"), interest)
+    if interest is None or _f(interest) <= 0:           # sans coût de dette = pleinement couvert
+        interest_coverage = interest_coverage_cap
+    else:
+        cov = _safe_div(i0.get("ebit"), interest)
+        interest_coverage = cov if np.isnan(cov) else min(cov, interest_coverage_cap)
     net_debt = i0.get("netDebt", b0.get("netDebt"))
     if net_debt is None:
         net_debt = _f(b0.get("totalDebt")) - _f(b0.get("cashAndCashEquivalents"))

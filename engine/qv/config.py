@@ -72,6 +72,10 @@ VALUE_OWN_HISTORY_YEARS = 5            # fenêtre du percentile vs propre histoi
 # TENDANCE = plausible mais NON TESTÉE → advisory, PAS d'exclusion dure en V1
 # (risque de circularité ; ne pas déclarer validé — SPEC §4.4).
 # ─────────────────────────────────────────────────────────────────────────────
+# Sentinel « pleinement couvert » : interestExpense ≤ 0 (sans dette) → couverture
+# bornée à ce fini, sinon inf casserait le z-score qualité (winsor/std). Plafonne
+# aussi les couvertures finies énormes. Sûr pour le bouclier (≥2) et le scoring.
+INTEREST_COVERAGE_CAP = 100.0
 SHIELD_INTEREST_COVERAGE_MIN = 2.0     # niveau (exclusion dure)
 SHIELD_NET_DEBT_EBITDA_MAX = 3.5       # niveau (exclusion dure)
 SHIELD_FCF_TO_NI_MIN = 0.6             # qualité des earnings (Sloan), niveau
