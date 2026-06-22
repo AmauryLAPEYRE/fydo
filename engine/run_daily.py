@@ -9,6 +9,7 @@ staggéré : on ne re-fetch que les fondamentaux périmés (cache trimestriel).
 Lancer : PYTHONUTF8=1 python run_daily.py [limite_univers]
 """
 import datetime
+import os
 import pathlib
 import sys
 
@@ -29,9 +30,16 @@ from qv.data.screener import build_universe
 
 
 def _env() -> dict:
-    env = pathlib.Path(__file__).resolve().parents[1] / ".env"
-    return {l.split("=", 1)[0]: l.split("=", 1)[1].strip()
-            for l in env.read_text().splitlines() if "=" in l and not l.startswith("#")}
+    """Secrets : variables d'environnement d'abord (GH Actions), puis .env local."""
+    keys = ("FMP_API_KEY", "DATABASE_URL")
+    out = {k: os.environ[k] for k in keys if os.environ.get(k)}
+    env_file = pathlib.Path(__file__).resolve().parents[1] / ".env"
+    if len(out) < len(keys) and env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if "=" in line and not line.startswith("#"):
+                k, v = line.split("=", 1)
+                out.setdefault(k.strip(), v.strip())
+    return out
 
 
 def _signal_delta(current: pd.DataFrame, previous: pd.DataFrame) -> pd.DataFrame:
