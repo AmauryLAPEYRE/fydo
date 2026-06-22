@@ -12,15 +12,9 @@ la sûreté → pas d'ACCUMULER). Jamais un faux signal (SPEC §8).
 """
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
-
-def _num(df: pd.DataFrame, col: str) -> pd.Series:
-    """Colonne numérique, ou série de NaN si absente (fail-neutral)."""
-    if col not in df.columns:
-        return pd.Series(np.nan, index=df.index)
-    return pd.to_numeric(df[col], errors="coerce")
+from qv.brain._scoring import numeric_or_nan as _num
 
 
 def level_pass(

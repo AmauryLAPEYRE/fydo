@@ -15,6 +15,15 @@ from __future__ import annotations
 import pandas as pd
 
 
+def combined_score(
+    df: pd.DataFrame, weight_quality: float, weight_value: float
+) -> pd.Series:
+    """combined_z = w_q·quality_z + w_v·value_xs_z (priors 0.5/0.5, JAMAIS tunés —
+    SPEC §7.1). N'utilise QUE quality_z et value_xs_z : own_history_pctile a un poids
+    ZÉRO (garde-fou, jamais alpha — SPEC §4.3/§6). Verrouillé par test_invariants."""
+    return weight_quality * df["quality_z"] + weight_value * df["value_xs_z"]
+
+
 def gate_mask(score: pd.Series, threshold: float) -> pd.Series:
     """Sélection ordinale : score ≥ seuil (prior, jamais fitté — SPEC §7.1)."""
     return score >= threshold
